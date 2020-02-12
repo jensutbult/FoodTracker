@@ -10,14 +10,14 @@ import UIKit
 import os.log
 
 class MealTableViewController: UITableViewController {
-    
+
     //MARK: Properties
-    
-    var meals = [[String: Any?]]()
+
+    var meals = [Meal]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         // Use the edit button item provided by the table view controller.
         navigationItem.leftBarButtonItem = editButtonItem
 
@@ -40,47 +40,57 @@ class MealTableViewController: UITableViewController {
         return meals.count
     }
 
-    
+
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
+
         // Table view cells are reused and should be dequeued using a cell identifier.
         let cellIdentifier = "MealTableViewCell"
-        
+
         guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as? MealTableViewCell  else {
             fatalError("The dequeued cell is not an instance of MealTableViewCell.")
         }
-        
+
         // Fetches the appropriate meal for the data source layout.
         let meal = meals[indexPath.row]
-        
-        cell.nameLabel.text = meal["name"] as? String
-        cell.photoImageView.image = meal["photo"] as! UIImage?
-        cell.ratingControl.rating = meal["rating"] as! Int
-        
+
+        cell.nameLabel.text = meal.name
+        cell.photoImageView.image = meal.image ?? UIImage(named: "defaultPhoto")
+        cell.ratingControl.rating = meal.rating
+
+
+//        cell.nameLabel.text = meal["name"] as? String
+//        if let image = meal["photo"] as? UIImage {
+//            cell.photoImageView.image = image
+//        } else {
+//            cell.photoImageView.image = #imageLiteral(resourceName: "defaultPhoto")
+//        }
+//        cell.ratingControl.rating = meal["rating"] as! Int
+
         return cell
     }
-    
 
-    
+
+
     // Override to support conditional editing of the table view.
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         // Return false if you do not want the specified item to be editable.
         return true
     }
-    
 
-    
+
+
     // Override to support editing the table view.
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             // Delete the row from the data source
             meals.remove(at: indexPath.row)
+            try? meals.save(to: "meals.json")
             tableView.deleteRows(at: [indexPath], with: .fade)
         } else if editingStyle == .insert {
             // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
+        }
     }
-    
+
 
     /*
     // Override to support rearranging the table view.
@@ -97,46 +107,46 @@ class MealTableViewController: UITableViewController {
     }
     */
 
-    
+
     //MARK: - Navigation
 
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        
+
         super.prepare(for: segue, sender: sender)
-        
+
         switch(segue.identifier ?? "") {
-            
+
         case "AddItem":
             os_log("Adding a new meal.", log: OSLog.default, type: .debug)
-            
+
         case "ShowDetail":
             guard let mealDetailViewController = segue.destination as? MealViewController else {
                 fatalError("Unexpected destination: \(segue.destination)")
             }
-            
+
             guard let selectedMealCell = sender as? MealTableViewCell else {
                 fatalError("Unexpected sender: \(String(describing: sender))")
             }
-            
+
             guard let indexPath = tableView.indexPath(for: selectedMealCell) else {
                 fatalError("The selected cell is not being displayed by the table")
             }
-            
+
             let selectedMeal = meals[indexPath.row]
             mealDetailViewController.meal = selectedMeal
-            
+
         default:
             fatalError("Unexpected Segue Identifier; \(String(describing: segue.identifier))")
         }
     }
 
-    
+
     //MARK: Actions
-    
+
     @IBAction func unwindToMealList(sender: UIStoryboardSegue) {
         if let sourceViewController = sender.source as? MealViewController, let meal = sourceViewController.meal {
-            
+
             if let selectedIndexPath = tableView.indexPathForSelectedRow {
                 // Update an existing meal.
                 meals[selectedIndexPath.row] = meal
@@ -145,27 +155,42 @@ class MealTableViewController: UITableViewController {
             else {
                 // Add a new meal.
                 let newIndexPath = IndexPath(row: meals.count, section: 0)
-                
                 meals.append(meal)
                 tableView.insertRows(at: [newIndexPath], with: .automatic)
             }
+            try? meals.save(to: "meals.json")
         }
     }
-    
+
     //MARK: Private Methods
-    
+
     private func loadSampleMeals() {
-        
-        let photo1 = UIImage(named: "meal1")
-        let photo2 = UIImage(named: "meal2")
-        let photo3 = UIImage(named: "meal3")
+        do {
+            meals = try [Meal].restore(from: "meals.json")
+        } catch {
 
-        let meal1 = ["name": "Caprese Salad", "photo": photo1, "rating": 4] as [String : Any?]
-        let meal2 = ["name": "Chicken and Potatoes", "photo": photo2, "rating": 5] as [String : Any?]
-        let meal3 = ["name": "Pasta with Meatballs", "photo": photo3, "rating": 3] as [String : Any?]
-        let meal4 = ["name": "Korvstroganoff", "photo": nil, "rating": 3] as [String : Any?]
+            let photo1 = UIImage(named: "meal1")
+            let photo2 = UIImage(named: "meal2")
+            let photo3 = UIImage(named: "meal3")
 
-        meals += [meal1, meal2, meal3, meal4]
+            //        let meal1 = ["name": "Caprese Salad", "photo": photo1, "rating": 4] as [String : Any?]
+            //        let meal2 = ["name": "Chicken and Potatoes", "photo": photo2, "rating": 5] as [String : Any?]
+            //        let meal3 = ["name": "Pasta with Meatballs", "photo": photo3, "rating": 3] as [String : Any?]
+            //        let meal4 = ["name": "Korvstroganoff", "photo": nil, "rating": 3] as [String : Any?]
+
+
+            let meal1 = Meal(name: "Foobar", image: photo1, rating: 44)
+            let meal2 = Meal(name: "Foobar", image: photo1, rating: 4)
+            let meal3 = Meal(name: "Foobar", image: photo2, rating: 0)
+            let meal4 = Meal(name: "Foobar", image: nil, rating: 1)
+
+            meals += [meal1, meal2, meal3, meal4].compactMap { $0 }
+
+//            fatalError(error.localizedDescription)
+        }
+        return
+
+
     }
 
 }
