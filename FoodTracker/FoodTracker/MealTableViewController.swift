@@ -163,8 +163,9 @@ class MealTableViewController: UITableViewController {
         let meal1 = ["name": "Caprese Salad", "photo": photo1, "rating": 4] as [String : Any?]
         let meal2 = ["name": "Chicken and Potatoes", "photo": photo2, "rating": 5] as [String : Any?]
         let meal3 = ["name": "Pasta with Meatballs", "photo": photo3, "rating": 3] as [String : Any?]
+        let meal4 = ["name": "Korvstroganoff", "photo": nil, "rating": 3] as [String : Any?]
 
-        meals += [meal1, meal2, meal3]
+        meals += [meal1, meal2, meal3, meal4]
     }
 
 }
